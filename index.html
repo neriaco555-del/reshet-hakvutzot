@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>הקבוצות שלנו 💚</title>
+<meta name="description" content="הקבוצות שלנו - כל קבוצות הוואטסאפ במקום אחד" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💚</text></svg>">
+</head>
+<body>
+
+<!-- רקע אנימטיבי -->
+<div class="bg-blobs"><span class="b1"></span><span class="b2"></span><span class="b3"></span></div>
+
+<main class="wrap">
+
+  <!-- הירו -->
+  <section class="hero">
+    <h1>רשת הקבוצות שלנו</h1>
+    <p class="sub">כל קבוצות הוואטסאפ שלנו במקום אחד — בוחרים קבוצה ומצטרפים בלחיצה.</p>
+  </section>
+
+  <!-- רשימת קבוצות -->
+  <section id="groupsGrid" class="list"></section>
+
+  <!-- מצב ריק -->
+  <div id="emptyState" class="empty hidden">
+    <div class="empty-emoji">💬</div>
+    <h3>עוד לא נוספו קבוצות</h3>
+    <p>הקבוצות יופיעו כאן אוטומטית מהגוגל שיטס</p>
+  </div>
+
+</main>
+
+<footer>
+  <div class="wrap foot center">
+    <div>💚 <b>הקבוצות שלנו</b></div>
+  </div>
+</footer>
+
+<div id="toast" class="toast"></div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

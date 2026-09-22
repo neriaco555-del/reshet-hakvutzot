@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🖼️ כלי תמונות — הקבוצות שלנו</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+<style>
+.tool{max-width:640px;margin:0 auto;padding:40px 20px 80px;text-align:center}
+.tool h1{font-size:32px;margin:6px 0}
+.tool .sub{color:var(--muted);margin-bottom:22px}
+.drop{border:2px dashed #25d36688;border-radius:22px;padding:44px 20px;cursor:pointer;background:var(--card);transition:.2s}
+.drop:hover,.drop.over{background:#25d36618;transform:scale(1.01)}
+.drop b{font-size:19px}.drop p{color:var(--muted);font-size:14px;margin:8px 0 0}
+#previewBox{margin-top:20px;display:none}
+#previewBox img{width:100%;max-height:300px;object-fit:cover;border-radius:18px;border:1px solid rgba(255,255,255,.15)}
+#fileInfo{color:var(--muted);font-size:14px;margin:12px 0}
+#fileInfo.ok{color:#25D366}#fileInfo.bad{color:#ffd166}
+.tool-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.btn-copy{background:linear-gradient(135deg,#25D366,#128C7E);border:none;color:#fff;font-family:inherit;font-weight:800;font-size:16px;padding:13px 26px;border-radius:14px;cursor:pointer}
+.btn-copy:hover{filter:brightness(1.1)}
+.steps{text-align:right;background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:20px 24px;margin-top:26px;line-height:2}
+.steps b{color:#25D366}
+.back{display:inline-block;margin-top:22px}
+</style>
+</head>
+<body>
+<div class="bg-blobs"><span class="b1"></span><span class="b2"></span><span class="b3"></span></div>
+
+<main class="tool">
+  <h1>🖼️ כלי תמונות למנהל</h1>
+  <p class="sub">הופך תמונה מהמחשב לקוד שמדביקים בעמודת <b>image</b> בשיטס — בלי אתר חיצוני.</p>
+
+  <div id="drop" class="drop">
+    <b>📁 לחץ לבחירת תמונה / גרור לכאן / הדבק (Ctrl+V)</b>
+    <p>בוואטסאפ ווב: קליק ימני על התמונה → ״העתק תמונה״ → כאן Ctrl+V ✨<br>
+    (קישור <code>blob:</code> לא עובד באתר — חייבים את התמונה עצמה)</p>
+    <input id="fileInput" type="file" accept="image/*" hidden />
+  </div>
+
+  <div id="previewBox">
+    <img id="prev" alt="תצוגה מקדימה" />
+    <div id="fileInfo"></div>
+    <div class="tool-btns">
+      <button id="copyBtn" class="btn-copy">📋 העתק לשיטס</button>
+      <button id="dlBtn" class="btn-ghost">⬇️ הורד כקובץ</button>
+    </div>
+  </div>
+
+  <div class="steps">
+    <b>איך משתמשים:</b><br>
+    1️⃣ בחר תמונה (קובץ / גרירה / הדבקה)<br>
+    2️⃣ לחץ <b>״העתק לשיטס״</b><br>
+    3️⃣ בשיטס, בעמודת <b>image</b> של הקבוצה → הדבק (Ctrl+V)<br>
+    4️⃣ רענן את האתר — התמונה מופיעה! 🎉
+  </div>
+
+  <a class="btn-ghost back" href="index.html">→ חזרה לאתר</a>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const drop=$('#drop'), fi=$('#fileInput'), prev=$('#prev'), info=$('#fileInfo'), box=$('#previewBox');
+let dataURL='';
+
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),2200)}
+
+function compress(img, maxW, q){
+  const r=Math.min(1, maxW/img.width);
+  const c=document.createElement('canvas');
+  c.width=Math.round(img.width*r); c.height=Math.round(img.height*r);
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  return {url:c.toDataURL('image/jpeg',q), w:c.width, h:c.height};
+}
+
+async function handleFile(file){
+  if(!file || !file.type.startsWith('image/')){ toast('⚠️ זה לא קובץ תמונה'); return; }
+  toast('⏳ מעבד תמונה…');
+  const bmp=await createImageBitmap(file);
+  const img={width:bmp.width, height:bmp.height};
+  // מצייר פעם אחת לקנבס כדי לאפשר toDataURL ברזולוציות שונות
+  const full=document.createElement('canvas');
+  full.width=bmp.width; full.height=bmp.height;
+  full.getContext('2d').drawImage(bmp,0,0);
+  const srcImg=new Image();
+  srcImg.src=full.toDataURL('image/jpeg',.92);
+  await new Promise(r=>srcImg.onload=r);
+  let best=compress(srcImg,640,.72);
+  outer: for(const w of [640,512,400,320,256]) for(const q of [.72,.6,.5,.4,.3]){
+    best=compress(srcImg,w,q);
+    if(best.url.length<=45000) break outer;
+  }
+  dataURL=best.url;
+  prev.src=dataURL; box.style.display='block';
+  const kb=(dataURL.length/1024).toFixed(1);
+  if(dataURL.length<=50000){
+    info.className=''; info.id='fileInfo';
+    info.innerHTML=`✅ מוכן! ${best.w}×${best.h} • ~${kb}KB • ${dataURL.length.toLocaleString()} תווים — נכנס לשיטס`;
+  }else{
+    info.innerHTML=`⚠️ עדיין גדול (${kb}KB). נסה תמונה קטנה יותר.`;
+  }
+  box.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+drop.onclick=()=>fi.click();
+fi.onchange=e=>handleFile(e.target.files[0]);
+['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>handleFile(e.dataTransfer.files[0]));
+document.addEventListener('paste',e=>{
+  const f=[...(e.clipboardData?.files||[])].find(f=>f.type.startsWith('image/'));
+  if(f) handleFile(f);
+});
+
+$('#copyBtn').onclick=async()=>{
+  if(!dataURL) return;
+  try{ await navigator.clipboard.writeText(dataURL); toast('📋 הועתק! הדבק בעמודת image בשיטס'); }
+  catch{
+    const ta=document.createElement('textarea');ta.value=dataURL;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');ta.remove(); toast('📋 הועתק! הדבק בעמודת image בשיטס');
+  }
+};
+$('#dlBtn').onclick=()=>{
+  if(!dataURL) return;
+  const a=document.createElement('a');a.href=dataURL;a.download='group.jpg';a.click();
+  toast('⬇️ הורד! אפשר להעלות ל-postimages ולקבל קישור');
+};
+</script>
+</body>
+</html>
